@@ -10,6 +10,7 @@ edition = "2021"
 
 #crossterm支持windows,但性能比termion稍差，需要最新0.23版本，否则鼠标支持有问题
 tui = { version = "0.19.0", default-features = false, features = ['crossterm', 'serde'] }
+# crossterm 0.25.0以上版本有双击输入问题
 crossterm = { version = "0.25.0", features = [ "serde" ] }
 
 serde = {version = "1.0", features = ["derive"] }
