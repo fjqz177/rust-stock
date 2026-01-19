@@ -43,13 +43,29 @@ pub fn on_events(event: Event, app: &mut App) {
                         .select(Some(if sel < total - 1 { sel + 1 } else { sel }));
                 }
             } else if let Event::Mouse(mouse) = event {
-                if let MouseEventKind::Up(_button) = mouse.kind {
-                    let row = mouse.row as usize;
-                    //list是从第三行开始，所以要减去2, 这里本来还应该考虑list的滚动，
-                    // 但是app.stocks_state的滚动位置字段是private的，取不到。
-                    if row >= 2 && row < total + 2 {
-                        app.stocks_state.select(Some(row - 2));
+                match mouse.kind {
+                    MouseEventKind::Up(_button) => {
+                        let row = mouse.row as usize;
+                        if row >= 2 && row < total + 2 {
+                            app.stocks_state.select(Some(row - 2));
+                        }
                     }
+                    MouseEventKind::ScrollUp => {
+                        if total > 0 {
+                            app.stocks_state
+                                .select(Some(if sel > 0 { sel - 1 } else { 0 }));
+                        }
+                    }
+                    MouseEventKind::ScrollDown => {
+                        if total > 0 {
+                            app.stocks_state.select(Some(if sel < total - 1 {
+                                sel + 1
+                            } else {
+                                sel
+                            }));
+                        }
+                    }
+                    _ => {}
                 }
             }
         }
