@@ -297,11 +297,11 @@ pub fn stock_detail(app: &App) -> Paragraph<'_> {
 
 // 构造帮助说明控件
 pub fn help_panel() -> Paragraph<'static> {
-    let info = "【输入示例】\n\
+    let info = "[输入示例]\n\
                 1. 纯数字: 600519 (盲试沪深/港)\n\
                 2. 纯字母: NVDA (盲试美/英)\n\
                 3. 全手动: x市场.代码 (如 x105.AAPL)\n\
-                【项目地址/反馈】 https://github.com/fjqz177/rust-stock";
+                [项目地址/反馈] https://github.com/fjqz177/rust-stock";
 
     Paragraph::new(info)
         .alignment(Alignment::Left)
