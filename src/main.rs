@@ -44,18 +44,23 @@ fn close_terminal(mut terminal: CrossTerminal) -> DynResult {
 //主事件循环
 fn main_loop(terminal: &mut CrossTerminal, app: &mut App) -> DynResult {
     let mut last_tick = Instant::now();
+    let tick_rate = Duration::from_millis(100);
     while !app.should_exit {
         terminal.draw(|f| {
             on_draw(f, app);
         })?;
 
-        if crossterm::event::poll(
-            Duration::from_secs(1)
-                .checked_sub(last_tick.elapsed())
-                .unwrap_or_default(),
-        )? {
+        let timeout = tick_rate
+            .checked_sub(last_tick.elapsed())
+            .unwrap_or(Duration::from_millis(0));
+
+        if crossterm::event::poll(timeout)? {
             events::on_events(crossterm::event::read()?, app);
-        } else {
+            // 处理完事件后也检查一下 Channel 消息
+            app.drain_events();
+        }
+
+        if last_tick.elapsed() >= tick_rate {
             events::on_tick(app);
             last_tick = Instant::now();
         }
@@ -69,7 +74,7 @@ fn on_draw(frame: &mut TerminalFrame, app: &mut App) {
 
     // list的render需要调render_stateful_widget,否则滚动状态不对
     frame.render_stateful_widget(
-        widget::stock_list(&app.stocks.lock().unwrap()),
+        widget::stock_list(&app.stocks),
         chunks[1],
         &mut app.stocks_state,
     );

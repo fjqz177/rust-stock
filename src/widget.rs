@@ -112,7 +112,7 @@ pub fn stock_list(stocks: &Vec<Stock>) -> List<'_> {
 pub fn stock_detail(app: &App) -> Paragraph<'_> {
     // 获取当前选中股票的索引和数据
     let sel = app.stocks_state.selected().unwrap_or(0);
-    let stocks = app.stocks.lock().unwrap();
+    let stocks = &app.stocks;
 
     // 辅助函数：根据数值返回对应的颜色
     let colorize = |val: f64| {
@@ -324,13 +324,9 @@ pub fn stock_input(app: &App) -> Paragraph<'_> {
 // 构造标题栏控件
 pub fn title_bar(app: &App, rect: Rect) -> Paragraph<'_> {
     let left = format!("Stock v{}", VERSION);
-    let error = app.error.lock().unwrap();
+    let error = &app.error;
     let right = if error.is_empty() {
-        app.last_refresh
-            .lock()
-            .unwrap()
-            .format("最后更新 %H:%M:%S")
-            .to_string()
+        app.last_refresh.format("最后更新 %H:%M:%S").to_string()
     } else {
         error.clone()
     };

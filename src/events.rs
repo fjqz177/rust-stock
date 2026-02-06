@@ -4,7 +4,7 @@ use crate::{App, AppState, Stock};
 
 //处理键盘、鼠标事件
 pub fn on_events(event: Event, app: &mut App) {
-    let total = app.stocks.lock().unwrap().len();
+    let total = app.stocks.len();
     let sel = app.stocks_state.selected().unwrap_or(0);
     let selsome = app.stocks_state.selected().is_some() && sel < total;
     match app.state {
@@ -22,18 +22,24 @@ pub fn on_events(event: Event, app: &mut App) {
                         app.input = String::new();
                     } else if code == KeyCode::Char('d') && selsome {
                         //删除当前选中的stock
-                        app.stocks.lock().unwrap().remove(sel);
-                        app.save_stocks().unwrap();
+                        app.stocks.remove(sel);
+                        if let Err(e) = app.save_stocks() {
+                            app.error = e.to_string();
+                        }
                         app.stocks_state.select(None);
                     } else if code == KeyCode::Char('u') && selsome && sel > 0 {
                         //将选中stock往上移动一位
-                        app.stocks.lock().unwrap().swap(sel, sel - 1);
-                        app.save_stocks().unwrap();
+                        app.stocks.swap(sel, sel - 1);
+                        if let Err(e) = app.save_stocks() {
+                            app.error = e.to_string();
+                        }
                         app.stocks_state.select(Some(sel - 1));
                     } else if code == KeyCode::Char('j') && selsome && sel < total - 1 {
                         //将选中stock往下移动一位
-                        app.stocks.lock().unwrap().swap(sel, sel + 1);
-                        app.save_stocks().unwrap();
+                        app.stocks.swap(sel, sel + 1);
+                        if let Err(e) = app.save_stocks() {
+                            app.error = e.to_string();
+                        }
                         app.stocks_state.select(Some(sel + 1));
                     } else if code == KeyCode::Up && total > 0 {
                         //注意这里如果不加判断直接用sel - 1, 在sel为0时会导致异常
@@ -77,9 +83,11 @@ pub fn on_events(event: Event, app: &mut App) {
                 KeyCode::Enter => {
                     app.state = AppState::Normal;
                     if app.input.len() > 0 {
-                        app.stocks.lock().unwrap().push(Stock::new(&app.input));
+                        app.stocks.push(Stock::new(app.input.as_str()));
                         app.refresh_stocks();
-                        app.save_stocks().unwrap();
+                        if let Err(e) = app.save_stocks() {
+                            app.error = e.to_string();
+                        }
                     }
                 }
                 KeyCode::Esc => {
@@ -99,11 +107,8 @@ pub fn on_events(event: Event, app: &mut App) {
 }
 
 //处理定时事件
+//注意：App::on_tick 已经在 app.rs 中处理了 channel 消息和 tick 计数
+//所以这里的 on_tick 应该调用 app.on_tick()
 pub fn on_tick(app: &mut App) {
-    app.tick_count += 1;
-    if app.tick_count % 60 == 0 {
-        if let AppState::Normal = app.state {
-            app.refresh_stocks();
-        }
-    }
+    app.on_tick();
 }

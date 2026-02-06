@@ -13,6 +13,17 @@ cargo run
 
 本软件目前使用的是 **东方财富 (East Money)** 的公开行情接口。该接口无需注册，直接返回 JSON 格式数据。
 
+### 重构说明 (v3.0)
+本项目代码已进行深度重构，优化了架构和代码清晰度：
+- **架构**: 采用主线程更新 UI + 子线程获取数据 + Channel 通信的模式，消除了锁竞争。
+- **模块化**: 
+  - `src/model.rs`: 领域模型与 DTO 定义
+  - `src/api.rs`: 封装 HTTP 请求与数据解析
+  - `src/storage.rs`: 负责配置持久化
+  - `src/app.rs`: 核心业务逻辑
+  - `src/widget.rs`: UI 组件渲染
+- **依赖**: 保持零新增依赖，体积小巧。
+
 ### 1. 接口地址
 `http://push2.eastmoney.com/api/qt/ulist.np/get`
 
