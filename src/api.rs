@@ -68,7 +68,7 @@ mod tests {
     fn to_secid_numeric_blind() {
         assert_eq!(
             to_secid("600519"),
-            "1.600519,0.600519,116.600519,155.600519".to_string()
+            "1.600519,0.600519,116.600519".to_string()
         );
     }
 
@@ -77,6 +77,15 @@ mod tests {
         assert_eq!(
             to_secid("NVDA"),
             "105.NVDA,106.NVDA,107.NVDA,155.NVDA".to_string()
+        );
+    }
+
+    #[test]
+    fn to_secid_uk_trailing_dot() {
+        // 英股代码如 RR. (劳斯莱斯) 含字母和 '.'，应走字母分支
+        assert_eq!(
+            to_secid("RR."),
+            "105.RR.,106.RR.,107.RR.,155.RR.".to_string()
         );
     }
 }

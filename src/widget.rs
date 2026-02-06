@@ -73,7 +73,7 @@ pub fn main_chunks(area: Rect) -> Vec<Rect> {
 }
 
 // 构造股票列表控件
-pub fn stock_list(stocks: &Vec<Stock>) -> List<'_> {
+pub fn stock_list(stocks: &[Stock]) -> List<'_> {
     // 构造ListItem列表
     let items: Vec<_> = stocks
         .iter()
@@ -333,13 +333,7 @@ pub fn title_bar(app: &App, rect: Rect) -> Paragraph<'_> {
     Paragraph::new(Spans::from(vec![
         Span::raw(left.clone()),
         //使用checked_sub防止溢出
-        Span::raw(
-            " ".repeat(
-                (rect.width as usize)
-                    .checked_sub(right.width() + left.width())
-                    .unwrap_or(0),
-            ),
-        ),
+        Span::raw(" ".repeat((rect.width as usize).saturating_sub(right.width() + left.width()))),
         Span::styled(
             right,
             Style::default().fg(if error.is_empty() {

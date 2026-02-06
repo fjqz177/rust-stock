@@ -82,11 +82,25 @@ pub fn on_events(event: Event, app: &mut App) {
             Event::Key(key) if key.kind != KeyEventKind::Release => match key.code {
                 KeyCode::Enter => {
                     app.state = AppState::Normal;
-                    if app.input.len() > 0 {
-                        app.stocks.push(Stock::new(app.input.as_str()));
-                        app.refresh_stocks();
-                        if let Err(e) = app.save_stocks() {
-                            app.error = e.to_string();
+                    let input = app.input.trim();
+                    if input.is_empty() {
+                        app.error = "请输入证券代码".to_string();
+                    } else {
+                        let input_key = App::normalize_code_for_match(input);
+                        let exists = app
+                            .stocks
+                            .iter()
+                            .any(|s| App::normalize_code_for_match(&s.code) == input_key);
+                        if exists {
+                            app.error = format!("已存在证券代码: {}", input);
+                        } else {
+                            app.stocks.push(Stock::new(input));
+                            app.refresh_stocks();
+                            if let Err(e) = app.save_stocks() {
+                                app.error = e.to_string();
+                            } else {
+                                app.error.clear();
+                            }
                         }
                     }
                 }

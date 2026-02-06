@@ -131,7 +131,7 @@ impl App {
         self.drain_events();
 
         // 定时刷新 (每60个tick)
-        if self.tick_count % 60 == 0 {
+        if self.tick_count.is_multiple_of(60) {
             if let AppState::Normal = self.state {
                 self.refresh_stocks();
             }
@@ -164,13 +164,64 @@ impl App {
         }
     }
 
-    fn normalize_code_for_match(code: &str) -> String {
+    pub(crate) fn normalize_code_for_match(code: &str) -> String {
         let stripped = if let Some(rest) = code.strip_prefix('x') {
             rest
         } else {
             code
         };
-        let without_market = stripped.rsplit('.').next().unwrap_or(stripped);
+        // 只有当 '.' 前面是纯数字 (市场前缀如 1. / 105. / 155.) 时才剥离，
+        // 否则保留完整代码 (如英股 RR. 中的 '.' 属于代码本身)
+        let without_market = if let Some(dot_pos) = stripped.find('.') {
+            let prefix = &stripped[..dot_pos];
+            if !prefix.is_empty() && prefix.chars().all(|c| c.is_ascii_digit()) {
+                &stripped[dot_pos + 1..]
+            } else {
+                stripped
+            }
+        } else {
+            stripped
+        };
         without_market.to_ascii_uppercase()
+    }
+}
+
+impl Default for App {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::App;
+
+    #[test]
+    fn normalize_plain_alpha() {
+        assert_eq!(App::normalize_code_for_match("NVDA"), "NVDA");
+    }
+
+    #[test]
+    fn normalize_numeric() {
+        assert_eq!(App::normalize_code_for_match("600519"), "600519");
+    }
+
+    #[test]
+    fn normalize_strip_market_prefix() {
+        assert_eq!(App::normalize_code_for_match("105.NVDA"), "NVDA");
+        assert_eq!(App::normalize_code_for_match("155.RR."), "RR.");
+    }
+
+    #[test]
+    fn normalize_x_prefix() {
+        assert_eq!(App::normalize_code_for_match("x105.NVDA"), "NVDA");
+        assert_eq!(App::normalize_code_for_match("x155.RR."), "RR.");
+    }
+
+    #[test]
+    fn normalize_uk_trailing_dot() {
+        // 英股代码如 RR. (劳斯莱斯)，'.' 属于代码本身，不应被剥离
+        assert_eq!(App::normalize_code_for_match("RR."), "RR.");
+        assert_eq!(App::normalize_code_for_match("BARC."), "BARC.");
     }
 }
